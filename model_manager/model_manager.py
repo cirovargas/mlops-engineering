@@ -11,6 +11,7 @@ CORS(app)
 
 CLUSTER_API_URL = 'http://mlops-cluster-api:5000/cluster'
 INADIMPLENTE_API_URL = 'http://mlops-inadimplente-api:5000/predict'
+PROBABILIDADE_API_URL = 'http://mlops-probabilidade-api:5000/predict_probability'
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'dbname=model_manager_db user=postgres password=postgres host=mlops-postgres port=5432')
 
@@ -26,6 +27,7 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 data JSONB,
                 cluster INTEGER,
+                probability INTEGER,
                 prediction BOOLEAN
             );
         ''')
@@ -72,6 +74,27 @@ def predict_inadimplencia():
         conn.close()
 
         return jsonify(classifier_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+@app.route('/probability', methods=['POST'])
+def predict_probability():
+    try:
+        data = request.get_json()
+
+        probability_response = requests.post(PROBABILIDADE_API_URL, json=data)
+        probability_data = probability_response.json()
+
+        conn = connect_db()
+        with conn.cursor() as cursor:
+            cursor.execute(
+                'INSERT INTO forms (data, probability) VALUES (%s, %s) RETURNING id;',
+                (json.dumps(data), probability_data['probability'])
+            )
+            conn.commit()
+        conn.close()
+
+        return jsonify(probability_data)
 
     except Exception as e:
         return jsonify({'error': str(e)}), 400

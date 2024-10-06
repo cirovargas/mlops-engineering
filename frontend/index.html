@@ -81,6 +81,7 @@
             <h4>Resultado:</h4>
             <p id="clusterResult"></p>
             <p id="predictionResult"></p>
+            <p id="probabilityResult"></p>
         </div>
     </div>
 
@@ -118,12 +119,21 @@
                     },
                     body: JSON.stringify(formData)
                 })
+                .then(response => response.json()),
+                fetch(server+'/probability', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
                 .then(response => response.json())
             ])
             .then(data => {
                 console.log('data',data)
                 document.getElementById('clusterResult').textContent = 'Categoria de cliente: ' + data[1].cluster;
                 document.getElementById('predictionResult').textContent = 'Possibilidade de inadimplencia: ' + (data[0].inadimplente ? 'Sim' : 'Não');
+                document.getElementById('probabilityResult').textContent = 'A probabilidade de inadimplencia é de: ' + data[2].probability +'%';
 
                 document.getElementById('result').style.display = 'block';
             })

@@ -20,6 +20,16 @@ services:
     expose:
       - 5000
 
+  mlops-probabilidade-api:
+    build:
+      context: ./probabilidade
+      dockerfile: Dockerfile
+    container_name: mlops-probabilidade-api
+    networks:
+      - mlops
+    expose:
+      - 5000
+
   mlops-model-manager-api:
     build:
       context: ./model_manager
@@ -28,6 +38,7 @@ services:
     links:
       - mlops-inadimplente-api
       - mlops-cluster-api
+      - mlops-probabilidade-api
       - mlops-postgres
     networks:
       - mlops
@@ -35,6 +46,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@mlops-postgres:5432/model_manager_db
     depends_on:
       - mlops-cluster-api
+      - mlops-probabilidade-api
       - mlops-inadimplente-api
     expose:
       - 5000

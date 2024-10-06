@@ -31,7 +31,7 @@ def predict_inadimplencia():
     try:
         data = request.get_json()
         input_data = pd.DataFrame([data])
-        input_data = pd.get_dummies(input_data, columns=['etnia', 'genero', 'estado_civil', 'escolaridade'], drop_first=True)
+        input_data = pd.get_dummies(input_data, columns=['etnia', 'genero', 'estado_civil', 'escolaridade'])
 
         for col in expected_columns:
             if col not in input_data.columns:
