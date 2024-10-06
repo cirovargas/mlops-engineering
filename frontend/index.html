@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Clusterização e Predição</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="container">
+        <h1 class="mt-5">Prever Inadimplência e Clusterização</h1>
+        <form id="customerForm" class="mt-4">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="idade" class="form-label">Idade:</label>
+                    <input type="number" id="idade" name="idade" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="etnia" class="form-label">Etnia:</label>
+                    <select id="etnia" name="etnia" class="form-select" required>
+                        <option value="Branco">Branco</option>
+                        <option value="Negro">Negro</option>
+                        <option value="Pardo">Pardo</option>
+                        <option value="Amarelo">Amarelo</option>
+                        <option value="Indígena">Indígena</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="genero" class="form-label">Gênero:</label>
+                    <select id="genero" name="genero" class="form-select" required>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Feminino">Feminino</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="casa_propria" class="form-label">Casa Própria:</label>
+                    <select id="casa_propria" name="casa_propria" class="form-select" required>
+                        <option value="1">Sim</option>
+                        <option value="0">Não</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="outras_rendas" class="form-label">Outras Rendas:</label>
+                    <select id="outras_rendas" name="outras_rendas" class="form-select" required>
+                        <option value="1">Sim</option>
+                        <option value="0">Não</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="estado_civil" class="form-label">Estado Civil:</label>
+                    <select id="estado_civil" name="estado_civil" class="form-select" required>
+                        <option value="Solteiro">Solteiro</option>
+                        <option value="Casado">Casado</option>
+                        <option value="Divorciado">Divorciado</option>
+                        <option value="Viúvo">Viúvo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="escolaridade" class="form-label">Escolaridade:</label>
+                <select id="escolaridade" name="escolaridade" class="form-select" required>
+                    <option value="Fundamental">Fundamental</option>
+                    <option value="Médio">Médio</option>
+                    <option value="Superior">Superior</option>
+                    <option value="Pós-graduação">Pós-graduação</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Enviar</button>
+        </form>
+
+        <div id="result" class="result mt-5 alert alert-info" style="display:none;">
+            <h4>Resultado:</h4>
+            <p id="clusterResult"></p>
+            <p id="predictionResult"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('customerForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = {
+                idade: document.getElementById('idade').value,
+                etnia: document.getElementById('etnia').value,
+                genero: document.getElementById('genero').value,
+                casa_propria: parseInt(document.getElementById('casa_propria').value),
+                outras_rendas: parseInt(document.getElementById('outras_rendas').value),
+                estado_civil: document.getElementById('estado_civil').value,
+                escolaridade: document.getElementById('escolaridade').value
+            };
+
+            console.log('formData', formData)
+
+            const server = 'http://'+location.hostname+':8080'
+
+            Promise.all([
+                fetch(server+'/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json()),
+                fetch(server+'/cluster', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+            ])
+            .then(data => {
+                console.log('data',data)
+                document.getElementById('clusterResult').textContent = 'Categoria de cliente: ' + data[1].cluster;
+                document.getElementById('predictionResult').textContent = 'Possibilidade de inadimplencia: ' + (data[0].inadimplente ? 'Sim' : 'Não');
+
+                document.getElementById('result').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

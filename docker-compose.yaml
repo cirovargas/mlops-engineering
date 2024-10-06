@@ -1,0 +1,71 @@
+version: '3'
+services:
+  mlops-cluster-api:
+    build:
+      context: ./cluster_classificacao
+      dockerfile: Dockerfile
+    container_name: mlops-cluster-api
+    networks:
+      - mlops
+    expose:
+      - 5000
+
+  mlops-inadimplente-api:
+    build:
+      context: ./predicao_inadimplente
+      dockerfile: Dockerfile
+    container_name: mlops-inadimplente-api
+    networks:
+      - mlops
+    expose:
+      - 5000
+
+  mlops-model-manager-api:
+    build:
+      context: ./model_manager
+      dockerfile: Dockerfile
+    container_name: mlops-model-manager-api
+    links:
+      - mlops-inadimplente-api
+      - mlops-cluster-api
+      - mlops-postgres
+    networks:
+      - mlops
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@mlops-postgres:5432/model_manager_db
+    depends_on:
+      - mlops-cluster-api
+      - mlops-inadimplente-api
+    expose:
+      - 5000
+  mlops-postgres:
+    image: postgres:13
+    container_name: mlops-postgres
+    networks:
+      - mlops
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: model_manager_db
+    ports:
+      - "5432:5432"
+  mlops-nginx:
+    image: nginx:latest
+    container_name: mlops-nginx
+    links:
+      - mlops-model-manager-api
+    networks:
+      - mlops
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - ./logs:/var/log/nginx
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend:/var/www
+    depends_on:
+      - mlops-model-manager-api
+
+
+networks:
+  mlops: ~
