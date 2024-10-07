@@ -46,7 +46,7 @@ def cluster_client():
         with conn.cursor() as cursor:
             cursor.execute(
                 'INSERT INTO forms (data, cluster) VALUES (%s, %s) RETURNING id;',
-                (json.dumps(data), cluster_data['cluster'])
+                (json.dumps(data), cluster_data['cluster_id'])
             )
             conn.commit()
         conn.close()
